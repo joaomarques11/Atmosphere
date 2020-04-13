@@ -17,7 +17,6 @@
 #pragma once
 
 #include "sf/sf_common.hpp"
-#include "sf/sf_mem_utility.hpp"
 #include "sf/sf_service_object.hpp"
 #include "sf/hipc/sf_hipc_server_session_manager.hpp"
 

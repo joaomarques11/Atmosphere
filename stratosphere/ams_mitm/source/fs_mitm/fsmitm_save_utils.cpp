@@ -22,24 +22,24 @@ namespace ams::mitm::fs {
     namespace {
 
         Result GetSaveDataSpaceIdString(const char **out_str, u8 space_id) {
-            switch (static_cast<SaveDataSpaceId>(space_id)) {
-                case SaveDataSpaceId::System:
-                case SaveDataSpaceId::ProperSystem:
+            switch (space_id) {
+                case FsSaveDataSpaceId_System:
+                case FsSaveDataSpaceId_ProperSystem:
                     *out_str = "sys";
                     break;
-                case SaveDataSpaceId::User:
+                case FsSaveDataSpaceId_User:
                     *out_str = "user";
                     break;
-                case SaveDataSpaceId::SdSystem:
+                case FsSaveDataSpaceId_SdSystem:
                     *out_str = "sd_sys";
                     break;
-                case SaveDataSpaceId::Temporary:
+                case FsSaveDataSpaceId_Temporary:
                     *out_str = "temp";
                     break;
-                case SaveDataSpaceId::SdUser:
+                case FsSaveDataSpaceId_SdUser:
                     *out_str = "sd_user";
                     break;
-                case SaveDataSpaceId::SafeMode:
+                case FsSaveDataSpaceId_SafeMode:
                     *out_str = "safe";
                     break;
                 default:
@@ -49,27 +49,27 @@ namespace ams::mitm::fs {
             return ResultSuccess();
         }
 
-        Result GetSaveDataTypeString(const char **out_str, SaveDataType save_data_type) {
+        Result GetSaveDataTypeString(const char **out_str, u8 save_data_type) {
             switch (save_data_type) {
-                case SaveDataType::System:
+                case FsSaveDataType_System:
                     *out_str = "system";
                     break;
-                case SaveDataType::Account:
+                case FsSaveDataType_Account:
                     *out_str = "account";
                     break;
-                case SaveDataType::Bcat:
+                case FsSaveDataType_Bcat:
                     *out_str = "bcat";
                     break;
-                case SaveDataType::Device:
+                case FsSaveDataType_Device:
                     *out_str = "device";
                     break;
-                case SaveDataType::Temporary:
+                case FsSaveDataType_Temporary:
                     *out_str = "temp";
                     break;
-                case SaveDataType::Cache:
+                case FsSaveDataType_Cache:
                     *out_str = "cache";
                     break;
-                case SaveDataType::SystemBcat:
+                case FsSaveDataType_SystemBcat:
                     *out_str = "system_bcat";
                     break;
                 default:
@@ -80,29 +80,30 @@ namespace ams::mitm::fs {
             return ResultSuccess();
         }
 
-        constexpr inline bool IsEmptyAccountId(const UserId &uid) {
-            return uid == InvalidUserId;
+        constexpr inline bool IsEmptyAccountId(const AccountUid &uid) {
+            constexpr AccountUid empty_uid = {};
+            return std::memcmp(&uid, &empty_uid, sizeof(uid)) == 0;
         }
 
 
     }
 
-    Result SaveUtil::GetDirectorySaveDataPath(char *dst, size_t dst_size, ncm::ProgramId program_id, u8 space_id, const fs::SaveDataAttribute &attribute) {
+    Result SaveUtil::GetDirectorySaveDataPath(char *dst, size_t dst_size, ncm::ProgramId program_id, u8 space_id, const FsSaveDataAttribute &attribute) {
         /* Saves should be separate for emunand vs sysnand. */
         const char *emummc_str = emummc::IsActive() ? "emummc" : "sysmmc";
 
         /* Get space_id, save_data_type strings. */
         const char *space_id_str, *save_type_str;
         R_TRY(GetSaveDataSpaceIdString(&space_id_str, space_id));
-        R_TRY(GetSaveDataTypeString(&save_type_str, attribute.type));
+        R_TRY(GetSaveDataTypeString(&save_type_str, attribute.save_data_type));
 
         /* Initialize the path. */
-        const bool is_system = attribute.system_save_data_id != InvalidSystemSaveDataId && IsEmptyAccountId(attribute.user_id);
+        const bool is_system = attribute.system_save_data_id != 0 && IsEmptyAccountId(attribute.uid);
         size_t out_path_len;
         if (is_system) {
             out_path_len = static_cast<size_t>(std::snprintf(dst, dst_size, "/atmosphere/saves/%s/%s/%s/%016lx", emummc_str, space_id_str, save_type_str, attribute.system_save_data_id));
         } else {
-            out_path_len = static_cast<size_t>(std::snprintf(dst, dst_size, "/atmosphere/saves/%s/%s/%s/%016lx/%016lx%016lx", emummc_str, space_id_str, save_type_str, static_cast<u64>(program_id), attribute.user_id.data[1], attribute.user_id.data[0]));
+            out_path_len = static_cast<size_t>(std::snprintf(dst, dst_size, "/atmosphere/saves/%s/%s/%s/%016lx/%016lx%016lx", emummc_str, space_id_str, save_type_str, static_cast<u64>(program_id), attribute.uid.uid[1], attribute.uid.uid[0]));
         }
 
         R_UNLESS(out_path_len < dst_size, fs::ResultTooLongPath());

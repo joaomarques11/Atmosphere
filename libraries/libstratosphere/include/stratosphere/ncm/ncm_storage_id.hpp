@@ -26,11 +26,6 @@ namespace ams::ncm {
         BuiltInUser     = 4,
         SdCard          = 5,
         Any             = 6,
-
-        /* Aliases. */
-        Card            = GameCard,
-        BuildInSystem   = BuiltInSystem,
-        BuildInUser     = BuiltInUser,
     };
 
     constexpr inline bool IsUniqueStorage(StorageId id) {

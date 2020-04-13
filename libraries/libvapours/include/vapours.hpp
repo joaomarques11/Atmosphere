@@ -19,9 +19,7 @@
 #include <vapours/assert.hpp>
 #include <vapours/literals.hpp>
 
-#include <vapours/allocator.hpp>
 #include <vapours/timespan.hpp>
-#include <vapours/span.hpp>
 
 #include <vapours/util.hpp>
 #include <vapours/results.hpp>

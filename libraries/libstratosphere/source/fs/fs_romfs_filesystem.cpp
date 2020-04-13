@@ -233,13 +233,6 @@ namespace ams::fs {
                             {
                                 R_UNLESS(offset >= 0,          fs::ResultOutOfRange());
                                 R_UNLESS(this->GetSize() >= 0, fs::ResultOutOfRange());
-
-                                auto operate_size = size;
-                                if (offset + operate_size > this->GetSize() || offset + operate_size < offset) {
-                                    operate_size = this->GetSize() - offset;
-                                }
-
-                                return this->GetStorage()->OperateRange(dst, dst_size, op_id, this->start + offset, operate_size, src, src_size);
                             }
                         default:
                             return fs::ResultUnsupportedOperationInRomFsFileB();
@@ -488,7 +481,7 @@ namespace ams::fs {
         AMS_ASSERT(out_file != nullptr);
         AMS_ASSERT(path != nullptr);
 
-        R_UNLESS((mode & fs::OpenMode_All) == fs::OpenMode_Read, fs::ResultInvalidOpenMode());
+        R_UNLESS((mode & fs::OpenMode_All) == fs::OpenMode_Read, fs::ResultInvalidArgument());
 
         RomFileTable::FileInfo file_info;
         R_TRY(this->GetFileInfo(std::addressof(file_info), path));
@@ -522,8 +515,7 @@ namespace ams::fs {
     }
 
     Result RomFsFileSystem::GetFreeSpaceSizeImpl(s64 *out, const char *path) {
-        *out = 0;
-        return ResultSuccess();
+        return fs::ResultUnsupportedOperationInRomFsFileSystemC();
     }
 
     Result RomFsFileSystem::GetTotalSpaceSizeImpl(s64 *out, const char *path) {

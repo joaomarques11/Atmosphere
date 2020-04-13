@@ -73,11 +73,12 @@ namespace ams::ncm {
 
         /* Allocate space to hold the converted meta. */
         const size_t meta_size = package_meta_reader.CalculateConvertContentMetaSize();
-        std::unique_ptr<char[]> meta(new (std::nothrow) char[meta_size]);
+        void *meta = std::malloc(meta_size);
+        ON_SCOPE_EXIT { std::free(meta); };
 
         /* Convert the meta from packaged form to normal form. */
-        package_meta_reader.ConvertToContentMeta(meta.get(), meta_size, meta_info);
-        ncm::ContentMetaReader meta_reader(meta.get(), meta_size);
+        package_meta_reader.ConvertToContentMeta(meta, meta_size, meta_info);
+        ncm::ContentMetaReader meta_reader(meta, meta_size);
 
         /* Insert the new metas into the database. */
         R_TRY(this->db->Set(package_meta_reader.GetKey(), meta_reader.GetData(), meta_reader.GetSize()));

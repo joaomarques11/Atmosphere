@@ -93,14 +93,13 @@ namespace ams::kvdb {
                     size_t count;
                     size_t capacity;
                     Entry *entries;
-                    MemoryResource *memory_resource;
                 public:
-                    Index() : count(0), capacity(0), entries(nullptr), memory_resource(nullptr) { /* ... */ }
+                    Index() : count(0), capacity(0), entries(nullptr) { /* ... */ }
 
                     ~Index() {
                         if (this->entries != nullptr) {
                             this->ResetEntries();
-                            this->memory_resource->Deallocate(this->entries, sizeof(Entry) * this->capacity);
+                            std::free(this->entries);
                             this->entries = nullptr;
                         }
                     }
@@ -115,25 +114,30 @@ namespace ams::kvdb {
 
                     void ResetEntries() {
                         for (size_t i = 0; i < this->count; i++) {
-                            this->memory_resource->Deallocate(this->entries[i].GetValuePointer(), this->entries[i].GetValueSize());
+                            std::free(this->entries[i].GetValuePointer());
                         }
                         this->count = 0;
                     }
 
-                    Result Initialize(size_t capacity, MemoryResource *mr) {
-                        this->entries = reinterpret_cast<Entry *>(mr->Allocate(sizeof(Entry) * capacity));
+                    Result Initialize(size_t capacity) {
+                        this->entries = reinterpret_cast<Entry *>(std::malloc(sizeof(Entry) * capacity));
                         R_UNLESS(this->entries != nullptr, ResultAllocationFailed());
                         this->capacity = capacity;
-                        this->memory_resource = mr;
                         return ResultSuccess();
                     }
 
                     Result Set(const Key &key, const void *value, size_t value_size) {
+                        /* Allocate new value. */
+                        void *new_value = std::malloc(value_size);
+                        R_UNLESS(new_value != nullptr, ResultAllocationFailed());
+                        auto value_guard = SCOPE_GUARD { std::free(new_value); };
+                        std::memcpy(new_value, value, value_size);
+
                         /* Find entry for key. */
                         Entry *it = this->lower_bound(key);
                         if (it != this->end() && it->GetKey() == key) {
                             /* Entry already exists. Free old value. */
-                            this->memory_resource->Deallocate(it->GetValuePointer(), it->GetValueSize());
+                            std::free(it->GetValuePointer());
                         } else {
                             /* We need to add a new entry. Check we have room, move future keys forward. */
                             R_UNLESS(this->count < this->capacity, ResultOutOfKeyResource());
@@ -141,12 +145,8 @@ namespace ams::kvdb {
                             this->count++;
                         }
 
-                        /* Allocate new value. */
-                        void *new_value = this->memory_resource->Allocate(value_size);
-                        R_UNLESS(new_value != nullptr, ResultAllocationFailed());
-                        std::memcpy(new_value, value, value_size);
-
                         /* Save the new Entry in the map. */
+                        value_guard.Cancel();
                         *it = Entry(key, new_value, value_size);
                         return ResultSuccess();
                     }
@@ -164,7 +164,7 @@ namespace ams::kvdb {
                         R_UNLESS(it != this->end(), ResultKeyNotFound());
 
                         /* Free the value, move entries back. */
-                        this->memory_resource->Deallocate(it->GetValuePointer(), it->GetValueSize());
+                        std::free(it->GetValuePointer());
                         std::memmove(it, it + 1, sizeof(*it) * (this->end() - (it + 1)));
                         this->count--;
                         return ResultSuccess();
@@ -258,11 +258,10 @@ namespace ams::kvdb {
             Index index;
             Path path;
             Path temp_path;
-            MemoryResource *memory_resource;
         public:
             MemoryKeyValueStore() { /* ... */ }
 
-            Result Initialize(const char *dir, size_t capacity, MemoryResource *mr) {
+            Result Initialize(const char *dir, size_t capacity) {
                 /* Ensure that the passed path is a directory. */
                 fs::DirectoryEntryType entry_type;
                 R_TRY(fs::GetEntryType(std::addressof(entry_type), dir));
@@ -273,21 +272,18 @@ namespace ams::kvdb {
                 this->temp_path.SetFormat("%s%s", dir, "/imkvdb.tmp");
 
                 /* Initialize our index. */
-                R_TRY(this->index.Initialize(capacity, mr));
-                this->memory_resource = mr;
-
+                R_TRY(this->index.Initialize(capacity));
                 return ResultSuccess();
             }
 
-            Result Initialize(size_t capacity, MemoryResource *mr) {
+            Result Initialize(size_t capacity) {
                 /* This initializes without an archive file. */
                 /* A store initialized this way cannot have its contents loaded from or flushed to disk. */
                 this->path.Set("");
                 this->temp_path.Set("");
 
                 /* Initialize our index. */
-                R_TRY(this->index.Initialize(capacity, mr));
-                this->memory_resource = mr;
+                R_TRY(this->index.Initialize(capacity));
                 return ResultSuccess();
             }
 
@@ -323,9 +319,9 @@ namespace ams::kvdb {
                         R_TRY(reader.GetEntrySize(&key_size, &value_size));
 
                         /* Allocate memory for value. */
-                        void *new_value = this->memory_resource->Allocate(value_size);
+                        void *new_value = std::malloc(value_size);
                         R_UNLESS(new_value != nullptr, ResultAllocationFailed());
-                        auto value_guard = SCOPE_GUARD { this->memory_resource->Deallocate(new_value, value_size); };
+                        auto value_guard = SCOPE_GUARD { std::free(new_value); };
 
                         /* Read key and value. */
                         Key key;

@@ -249,14 +249,14 @@ namespace ams::creport {
         s32 num_threads;
         u64 thread_ids[ThreadCountMax];
         {
-            if (R_FAILED(svc::GetThreadList(&num_threads, thread_ids, ThreadCountMax, debug_handle))) {
+            if (R_FAILED(svcGetThreadList(&num_threads, thread_ids, ThreadCountMax, debug_handle))) {
                 return;
             }
             num_threads = std::min(size_t(num_threads), ThreadCountMax);
         }
 
         /* Parse thread infos. */
-        for (s32 i = 0; i < num_threads; i++) {
+        for (size_t i = 0; i < (u32)num_threads; i++) {
             if (this->threads[this->thread_count].ReadFromProcess(debug_handle, tls_map, thread_ids[i], is_64_bit)) {
                 this->thread_count++;
             }

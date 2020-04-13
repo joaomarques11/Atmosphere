@@ -116,6 +116,7 @@ namespace ams::util {
 
                 /* Find a free value. */
                 for (size_t i = 0; i < N; i++) {
+                    this->keys[i] = key;
                     if (!this->keys[i]) {
                         this->keys[i] = key;
                         new (GetPointer(this->values[i])) Value(std::forward<Args>(args)...);

@@ -202,7 +202,7 @@ namespace ams::fs {
 
                 virtual Result OpenFileImpl(std::unique_ptr<fsa::IFile> *out_file, const char *path, OpenMode mode) override final {
                     /* Only allow opening files with mode = read. */
-                    R_UNLESS((mode & fs::OpenMode_All) == fs::OpenMode_Read, fs::ResultInvalidOpenMode());
+                    R_UNLESS((mode & fs::OpenMode_All) == fs::OpenMode_Read, fs::ResultInvalidArgument());
 
                     /* If we support redirection, we'd like to prefer a file from the sd card. */
                     if (this->is_redirect) {
@@ -241,7 +241,6 @@ namespace ams::fs {
                     R_TRY(OpenSdCardCodeOrCodeFileSystemImpl(std::addressof(fsa), path, program_id));
                     this->code_fs.emplace(std::move(fsa), program_id, is_specific);
 
-                    this->program_id = program_id;
                     this->initialized = true;
 
                     return ResultSuccess();
@@ -252,7 +251,7 @@ namespace ams::fs {
                     R_UNLESS(this->initialized, fs::ResultNotInitialized());
 
                     /* Only allow opening files with mode = read. */
-                    R_UNLESS((mode & fs::OpenMode_All) == fs::OpenMode_Read, fs::ResultInvalidOpenMode());
+                    R_UNLESS((mode & fs::OpenMode_All) == fs::OpenMode_Read, fs::ResultInvalidArgument());
 
                     /* First, check if there's an external code. */
                     {

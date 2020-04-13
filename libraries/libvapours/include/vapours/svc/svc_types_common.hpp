@@ -60,8 +60,6 @@ namespace ams::svc {
             T pointer;
         public:
             constexpr ALWAYS_INLINE UserPointer(T p) : pointer(p) { /* ... */ }
-
-            constexpr ALWAYS_INLINE T GetPointerUnsafe() { return this->pointer; }
     };
 
     template<typename T>
@@ -170,11 +168,11 @@ namespace ams::svc {
         InitialProcessIdRangeInfo_Maximum = 1,
     };
 
-    enum PhysicalMemorySystemInfo : u64 {
-        PhysicalMemorySystemInfo_Application  = 0,
-        PhysicalMemorySystemInfo_Applet       = 1,
-        PhysicalMemorySystemInfo_System       = 2,
-        PhysicalMemorySystemInfo_SystemUnsafe = 3,
+    enum PhysicalMemoryInfo : u64 {
+        PhysicalMemoryInfo_Application  = 0,
+        PhysicalMemoryInfo_Applet       = 1,
+        PhysicalMemoryInfo_System       = 2,
+        PhysicalMemoryInfo_SystemUnsafe = 3,
     };
 
     enum LastThreadInfoFlag : u32 {

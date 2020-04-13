@@ -43,7 +43,7 @@ namespace ams::pm::impl {
             const ncm::ProgramLocation loc;
             const cfg::OverrideStatus status;
             Handle handle;
-            svc::ProcessState state;
+            ProcessState state;
             u32 flags;
             os::WaitableHolder waitable_holder;
         private:
@@ -87,20 +87,20 @@ namespace ams::pm::impl {
                 return this->status;
             }
 
-            svc::ProcessState GetState() const {
+            ProcessState GetState() const {
                 return this->state;
             }
 
-            void SetState(svc::ProcessState state) {
+            void SetState(ProcessState state) {
                 this->state = state;
             }
 
             bool HasStarted() const {
-                return this->state != svc::ProcessState_Created && this->state != svc::ProcessState_CreatedAttached;
+                return this->state != ProcessState_Created && this->state != ProcessState_CreatedAttached;
             }
 
-            bool HasTerminated() const {
-                return this->state == svc::ProcessState_Terminated;
+            bool HasExited() const {
+                return this->state == ProcessState_Exited;
             }
 
 #define DEFINE_FLAG_SET(flag) \

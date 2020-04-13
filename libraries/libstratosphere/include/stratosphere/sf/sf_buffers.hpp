@@ -191,7 +191,10 @@ namespace ams::sf {
             public:
                 constexpr InArrayImpl() : BaseType() { /* ... */ }
                 constexpr InArrayImpl(const cmif::PointerAndSize &_pas) : BaseType(_pas) { /* ... */ }
-                constexpr InArrayImpl(const T *ptr, size_t num_elements) : BaseType(reinterpret_cast<uintptr_t>(ptr), num_elements * sizeof(T)) { /* ... */ }
+                constexpr InArrayImpl(uintptr_t ptr, size_t sz) : BaseType(ptr, sz) { /* ... */ }
+
+                constexpr InArrayImpl(const void *ptr, size_t sz) : BaseType(reinterpret_cast<uintptr_t>(ptr), sz) { /* ... */ }
+                constexpr InArrayImpl(const T *ptr, size_t sz) : BaseType(reinterpret_cast<uintptr_t>(ptr), sz) { /* ... */ }
 
                 constexpr const T *GetPointer() const {
                     return reinterpret_cast<const T *>(this->GetAddressImpl());
@@ -204,14 +207,6 @@ namespace ams::sf {
                 constexpr const T &operator[](size_t i) const {
                     return this->GetPointer()[i];
                 }
-
-                constexpr explicit operator Span<const T>() const {
-                    return {this->GetPointer(), static_cast<ptrdiff_t>(this->GetSize())};
-                }
-
-                constexpr Span<const T> ToSpan() const {
-                    return {this->GetPointer(), static_cast<ptrdiff_t>(this->GetSize())};
-                }
         };
 
         template<typename T, BufferTransferMode TMode = PreferredTransferMode<T>>
@@ -223,7 +218,10 @@ namespace ams::sf {
             public:
                 constexpr OutArrayImpl() : BaseType() { /* ... */ }
                 constexpr OutArrayImpl(const cmif::PointerAndSize &_pas) : BaseType(_pas) { /* ... */ }
-                constexpr OutArrayImpl(T *ptr, size_t num_elements) : BaseType(reinterpret_cast<uintptr_t>(ptr), num_elements * sizeof(T)) { /* ... */ }
+                constexpr OutArrayImpl(uintptr_t ptr, size_t sz) : BaseType(ptr, sz) { /* ... */ }
+
+                constexpr OutArrayImpl(void *ptr, size_t sz) : BaseType(reinterpret_cast<uintptr_t>(ptr), sz) { /* ... */ }
+                constexpr OutArrayImpl(T *ptr, size_t sz) : BaseType(reinterpret_cast<uintptr_t>(ptr), sz) { /* ... */ }
 
                 constexpr T *GetPointer() const {
                     return reinterpret_cast<T *>(this->GetAddressImpl());
@@ -235,14 +233,6 @@ namespace ams::sf {
 
                 constexpr T &operator[](size_t i) const {
                     return this->GetPointer()[i];
-                }
-
-                constexpr explicit operator Span<T>() const {
-                    return {this->GetPointer(), static_cast<ptrdiff_t>(this->GetSize())};
-                }
-
-                constexpr Span<T> ToSpan() const {
-                    return {this->GetPointer(), static_cast<ptrdiff_t>(this->GetSize())};
                 }
         };
 
