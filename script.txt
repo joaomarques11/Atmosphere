@@ -1,0 +1,1 @@
+make -j4 dist-no-debug SEPT_00_ENC_PATH="/mnt/d/Switch/Atmosphere/sept-secondary_00.enc" SEPT_01_ENC_PATH="/mnt/d/Switch/Atmosphere/sept-secondary_01.enc" SEPT_DEV_00_ENC_PATH="/mnt/d/Switch/Atmosphere/sept-secondary_dev_00.enc" SEPT_DEV_01_ENC_PATH="/mnt/d/Switch/Atmosphere/sept-secondary_dev_01.enc"
